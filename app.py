@@ -5,36 +5,49 @@ import pandas as pd
 # --- PAGE CONFIG ---
 st.set_page_config(page_title="ANI-MIND | Crimson Onyx", page_icon="👹", layout="wide")
 
-# --- HIGH-CONTRAST CRIMSON & PURE WHITE CSS ---
+# --- THE "FIX EVERYTHING" CSS ---
 st.markdown("""
 <style>
-    /* Full Black Background */
-    .stApp {
-        background-color: #000000;
-    }
+    /* 1. Full Page & Sidebar */
+    .stApp { background-color: #000000; }
+    [data-testid="stSidebar"] { background-color: #050505 !important; border-right: 1px solid #330000; }
     
-    /* Global Text Color - Forced Pure White */
-    html, body, [class*="st-"] {
+    /* 2. Global Text Force White */
+    h1, h2, h3, h4, h5, h6, p, label, .stMetric, .stSelectbox p {
         color: #FFFFFF !important;
     }
 
-    /* Sidebar Fix: Make all text visible */
-    [data-testid="stSidebar"] {
-        background-color: #050505 !important;
-        border-right: 1px solid #330000;
-    }
-    [data-testid="stSidebar"] .stText, [data-testid="stSidebar"] label, [data-testid="stSidebar"] p {
+    /* 3. THE DROPDOWN FIX (CRITICAL) */
+    /* This targets the input box itself */
+    div[data-baseweb="select"] > div {
+        background-color: #111111 !important;
+        border: 2px solid #ff0000 !important;
         color: #FFFFFF !important;
-        font-weight: bold !important;
-    }
-    
-    /* Metrics in Sidebar */
-    [data-testid="stMetricValue"] {
-        color: #ff0000 !important;
-        font-size: 1.8rem !important;
     }
 
-    /* Hero Header */
+    /* This targets the text INSIDE the box while you type */
+    div[data-baseweb="select"] * {
+        color: #FFFFFF !important;
+    }
+
+    /* This targets the POPUP list that appears when you click */
+    ul[data-baseweb="listbox"] {
+        background-color: #111111 !important;
+    }
+    
+    ul[data-baseweb="listbox"] li {
+        color: #FFFFFF !important;
+        background-color: #111111 !important;
+        border-bottom: 1px solid #222 !important;
+    }
+
+    /* This targets the hover effect in the list */
+    ul[data-baseweb="listbox"] li:hover {
+        background-color: #ff0000 !important;
+        color: #FFFFFF !important;
+    }
+
+    /* 4. Hero & Cards */
     .hero-container {
         padding: 50px 20px;
         text-align: center;
@@ -42,17 +55,13 @@ st.markdown("""
         border-bottom: 3px solid #ff0000;
         margin-bottom: 40px;
     }
-    
     .hero-title {
         font-size: 5.5rem;
         font-weight: 900;
         letter-spacing: 15px;
         color: #FFFFFF !important;
         text-shadow: 2px 2px 20px #ff0000;
-        margin: 0;
     }
-
-    /* Recommendation Cards */
     .anime-card {
         background: #0f0f0f;
         border: 2px solid #222;
@@ -62,52 +71,21 @@ st.markdown("""
         height: 460px;
         margin-bottom: 25px;
     }
-    .anime-card:hover {
-        border-color: #ff0000;
-        box-shadow: 0 0 20px rgba(255, 0, 0, 0.6);
-    }
-
-    .poster-img {
-        width: 100%;
-        height: 360px;
-        object-fit: cover;
-    }
-
+    .anime-card:hover { border-color: #ff0000; box-shadow: 0 0 20px rgba(255, 0, 0, 0.6); }
+    .poster-img { width: 100%; height: 360px; object-fit: cover; }
     .card-content { padding: 15px; text-align: center; }
-    .card-title { 
-        font-size: 1.2rem; 
-        font-weight: 800; 
-        color: #FFFFFF !important; 
-        margin-bottom: 10px;
-        height: 30px;
-        overflow: hidden;
-    }
-    
-    .status-badge {
-        background: #ff0000;
-        color: white !important;
-        padding: 4px 15px;
-        border-radius: 5px;
-        font-size: 0.9rem;
-        font-weight: 900;
-    }
+    .card-title { font-size: 1.2rem; font-weight: 800; color: #FFFFFF !important; margin-bottom: 10px; height: 30px; overflow: hidden; }
+    .status-badge { background: #ff0000; color: white !important; padding: 4px 15px; border-radius: 5px; font-weight: 900; }
 
-    /* Selectbox Styling */
-    .stSelectbox label {
-        color: #FFFFFF !important;
-        font-size: 1.2rem !important;
-        margin-bottom: 10px !important;
-    }
-
-    /* Master Button */
+    /* 5. Execution Button */
     .stButton>button {
         background: #ff0000 !important;
         color: white !important;
         border: none !important;
         font-weight: 900 !important;
-        font-size: 1.1rem !important;
-        height: 3.5rem !important;
+        width: 100% !important;
         border-radius: 10px !important;
+        height: 3.5rem !important;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -117,7 +95,22 @@ st.markdown("""
 def load_data():
     df = pickle.load(open('models/anime_list.pkl', 'rb'))
     sim = pickle.load(open('models/similarity_matrix.pkl', 'rb'))
-    return df, sim
+    
+    # --- POPULAR ANIME SORTING ---
+    popular_favorites = [
+        "Attack on Titan", "Naruto", "Death Note", "One Piece", 
+        "Vinland Saga", "Spy x Family", "Demon Slayer", "Jujutsu Kaisen",
+        "Naruto Shippuuden", "BLEACH"
+    ]
+    
+    # Pull the favorites that actually exist in your Crunchyroll CSV
+    top_picks = df[df['name'].isin(popular_favorites)].sort_values(by='rate', ascending=False)
+    remaining = df[~df['name'].isin(popular_favorites)]
+    
+    # Combine them so favorites stay at the top (index 0, 1, 2...)
+    ordered_df = pd.concat([top_picks, remaining]).reset_index(drop=True)
+    
+    return ordered_df, sim
 
 anime_df, similarity = load_data()
 
@@ -128,7 +121,6 @@ with st.sidebar:
     st.metric("DATABASE", "CRUNCHYROLL")
     st.metric("CAPACITY", len(anime_df))
     st.write("---")
-    st.write("STATUS: **OPTIMIZED**")
     st.write("USER: **MEHVISH**")
 
 # --- MAIN UI ---
@@ -140,9 +132,13 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # Search Logic
-selected_name = st.selectbox("SELECT TARGET ANIME:", anime_df['name'].values)
+st.markdown("<p style='font-size:1.2rem; font-weight:bold;'>SELECT TARGET ANIME:</p>", unsafe_allow_html=True)
+selected_name = st.selectbox("", anime_df['name'].values, label_visibility="collapsed")
+
+st.write("##") # Spacing
 
 if st.button("EXECUTE NEURAL SCAN 🚀"):
+    # Always locate by name to ensure we match the right vector
     idx = anime_df[anime_df['name'] == selected_name].index[0]
     distances = sorted(list(enumerate(similarity[idx])), reverse=True, key=lambda x: x[1])[1:10]
     
@@ -152,7 +148,6 @@ if st.button("EXECUTE NEURAL SCAN 🚀"):
     for i, (item_idx, score) in enumerate(distances):
         info = anime_df.iloc[item_idx]
         with cols[i % 3]:
-            # Clean Card: Only Image, Title, and Score
             st.markdown(f"""
                 <div class="anime-card">
                     <img src="{info['image_url']}" class="poster-img">
