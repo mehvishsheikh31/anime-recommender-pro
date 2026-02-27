@@ -1,7 +1,7 @@
 import streamlit as st
 import pickle
 import pandas as pd
-
+import os
 
 # --- PAGE CONFIG (FORCE SIDEBAR OPEN) ---
 st.set_page_config(
@@ -10,6 +10,8 @@ st.set_page_config(
     layout="wide", 
     initial_sidebar_state="expanded"
 )
+
+# --- THE BRUTE FORCE CSS FIX ---
 st.markdown("""
 <style>
     /* 1. Global Background */
@@ -71,7 +73,6 @@ st.markdown("""
     }
 </style>
 """, unsafe_allow_html=True)
-import os  # Add this import at the very top of your app.py
 
 # --- LOAD DATA ---
 @st.cache_resource
@@ -79,15 +80,25 @@ def load_data():
     # Get the current directory of app.py
     base_path = os.path.dirname(__file__)
     
+    # Check for 'models' or 'Models' (Handling Linux case-sensitivity)
+    folder_name = 'models'
+    if not os.path.exists(os.path.join(base_path, folder_name)):
+        folder_name = 'Models'
+
     # Create the full path to your files
-    anime_list_path = os.path.join(base_path, 'models', 'anime_list.pkl')
-    similarity_path = os.path.join(base_path, 'models', 'similarity_matrix.pkl')
+    anime_list_path = os.path.join(base_path, folder_name, 'anime_list.pkl')
+    similarity_path = os.path.join(base_path, folder_name, 'similarity_matrix.pkl')
     
+    # Final check before loading
+    if not os.path.exists(anime_list_path):
+        st.error(f"Error: Could not find {anime_list_path}. Please check your GitHub folder name.")
+        st.stop()
+
     # Load the files
     df = pickle.load(open(anime_list_path, 'rb'))
     sim = pickle.load(open(similarity_path, 'rb'))
     
-    # ... (rest of your existing logic for genres and favorites stays the same)
+    # Process Genres
     df['genres_text'] = df['genres_text'].fillna('').astype(str)
     
     popular_favorites = ["Attack on Titan", "Naruto", "Death Note", "One Piece", "Vinland Saga", "Spy x Family", "Demon Slayer", "Jujutsu Kaisen"]
@@ -101,15 +112,14 @@ def load_data():
             all_genres.update(g_string.split())
     
     return ordered_df, sim, sorted(list(all_genres))
-# --- LOAD DATA ---
 
+# Execute Load
 anime_df, similarity, unique_genres = load_data()
 
 # --- SIDEBAR ---
 with st.sidebar:
     st.markdown("<h2 style='color: #ff0000;'>CRIMSON CONTROLS</h2>", unsafe_allow_html=True)
     st.write("---")
-    # Added unique keys to prevent the DuplicateElementId error
     sel_genres = st.multiselect("FILTER BY GENRE:", unique_genres, key="genre_filter_unique")
     min_rate = st.slider("MINIMUM RATING:", 0.0, 5.0, 3.5, key="rating_slider_unique")
     st.write("---")
