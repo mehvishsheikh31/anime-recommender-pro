@@ -20,10 +20,10 @@ ANI-MIND is a professional **Anime Discovery Engine** that leverages **Machine L
 ### 🔍 Discovery & Filtering
 | Neural Search Results | Genre & Rating Filtering |
 | :---: | :---: |
-| ![Neural Scan](assets/home.png) | ![Genre Filter](assets/genre.png) |
+| ![Neural Scan](assets/homee.png) | ![Genre Filter](assets/genre.png) |
 | *Deep content matching* | *Surgical genre precision* |
 
-(assets/page.png)
+![ page](assets/page.png)
 
 ---
 
