@@ -71,12 +71,23 @@ st.markdown("""
     }
 </style>
 """, unsafe_allow_html=True)
+import os  # Add this import at the very top of your app.py
 
 # --- LOAD DATA ---
 @st.cache_resource
 def load_data():
-    df = pickle.load(open('models/anime_list.pkl', 'rb'))
-    sim = pickle.load(open('models/similarity_matrix.pkl', 'rb'))
+    # Get the current directory of app.py
+    base_path = os.path.dirname(__file__)
+    
+    # Create the full path to your files
+    anime_list_path = os.path.join(base_path, 'models', 'anime_list.pkl')
+    similarity_path = os.path.join(base_path, 'models', 'similarity_matrix.pkl')
+    
+    # Load the files
+    df = pickle.load(open(anime_list_path, 'rb'))
+    sim = pickle.load(open(similarity_path, 'rb'))
+    
+    # ... (rest of your existing logic for genres and favorites stays the same)
     df['genres_text'] = df['genres_text'].fillna('').astype(str)
     
     popular_favorites = ["Attack on Titan", "Naruto", "Death Note", "One Piece", "Vinland Saga", "Spy x Family", "Demon Slayer", "Jujutsu Kaisen"]
@@ -90,6 +101,7 @@ def load_data():
             all_genres.update(g_string.split())
     
     return ordered_df, sim, sorted(list(all_genres))
+# --- LOAD DATA ---
 
 anime_df, similarity, unique_genres = load_data()
 
